@@ -1,5 +1,5 @@
 source_repo: eivindsjursen-lab/gates-suite
-source_branch: codex/permission-standalone-sync
-source_commit: 8072b9a1e8ba
-synced_at_utc: 2026-03-15T19:17:31Z
+source_branch: main
+source_commit: 5a2cdde340df
+synced_at_utc: 2026-03-15T19:19:46Z
 source_path: packages/agent-permission-diff-gate

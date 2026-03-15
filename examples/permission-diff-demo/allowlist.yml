@@ -1,0 +1,15 @@
+# Example: Allowlist for pre-approved tool capabilities
+# Tools listed here are excluded from the diff analysis.
+- tool: actions/checkout@v4
+  capabilities:
+    - read.repo
+
+- tool: actions/cache@v4
+  capabilities:
+    - read.repo
+
+- tool: docker/build-push-action@v5
+  capabilities:
+    - exec.docker
+    - write.packages
+    - egress.http

@@ -1,0 +1,14 @@
+# Example: Safe MCP configuration — only read-only tools
+# This config will PASS the Permission Diff Gate.
+mcpServers:
+  filesystem:
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"]
+    permissions:
+      - read.repo
+
+  git:
+    command: npx
+    args: ["-y", "@anthropic/git-mcp"]
+    permissions:
+      - read.repo

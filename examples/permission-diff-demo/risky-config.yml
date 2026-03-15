@@ -1,0 +1,25 @@
+# Example: Risky MCP configuration — adds critical capabilities
+# This config will FAIL the Permission Diff Gate (standard policy).
+mcpServers:
+  filesystem:
+    command: npx
+    args: ["-y", "@modelcontextprotocol/server-filesystem", "/workspace"]
+    permissions:
+      - read.repo
+      - write.repo # NEW: elevated from read-only
+
+  browser:
+    command: npx
+    args: ["-y", "@anthropic/browser-mcp"]
+    # No explicit permissions — inferred as egress.http by heuristic
+
+  terminal:
+    command: npx
+    args: ["-y", "terminal-mcp"]
+    # No explicit permissions — inferred as exec.shell (CRITICAL)
+
+# Gate will detect:
+# - filesystem: upgraded from read.repo to write.repo (high risk)
+# - browser: new tool with egress.http (high risk, heuristic)
+# - terminal: new tool with exec.shell (critical risk, heuristic)
+# Result: FAIL_CAPABILITY_ESCALATION

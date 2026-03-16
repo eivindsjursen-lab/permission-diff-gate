@@ -35,7 +35,7 @@ permissions:
 
 steps:
   - name: Permission Diff Gate
-    uses: eivindsjursen-lab/permission-diff-gate@v0.1.1
+    uses: eivindsjursen-lab/permission-diff-gate@v0.1.4
     with:
       mode: warn
       policy_level: standard
@@ -55,6 +55,43 @@ uses: eivindsjursen-lab/permission-diff-gate@v0
 - `approval_label` (default `agent-scope-approved`)
 - `allowlist_path` (optional YAML allowlist path)
 - `config_paths` (JSON array of glob patterns)
+- `base_sha` (optional base SHA override, recommended for `workflow_dispatch`)
+- `head_sha` (optional head SHA override, recommended for `workflow_dispatch`)
+
+## Running mode notes
+
+For `pull_request` events, default SHA resolution is usually enough.
+
+For `workflow_dispatch` validation runs, pass explicit SHAs to avoid ambiguous
+base/head selection:
+
+```yaml
+on:
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: "Base commit SHA"
+        required: true
+      head_sha:
+        description: "Head commit SHA"
+        required: true
+
+jobs:
+  permission-diff:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+      - name: Permission Diff Gate
+        uses: eivindsjursen-lab/permission-diff-gate@v0
+        with:
+          mode: warn
+          policy_level: standard
+          base_sha: ${{ inputs.base_sha }}
+          head_sha: ${{ inputs.head_sha }}
+```
 
 ## Outputs
 
@@ -85,4 +122,3 @@ Development source of truth lives in:
 
 - `eivindsjursen-lab/gates-suite`
 - `packages/agent-permission-diff-gate`
-

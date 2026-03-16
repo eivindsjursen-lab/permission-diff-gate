@@ -67133,19 +67133,47 @@ async function execute(config2) {
   }
   const baseSnapshots = [];
   const headSnapshots = [];
+  const unreadableFiles = [];
   for (const file2 of relevantFiles) {
+    let analyzed = false;
+    const patchFallback = isWorkflowFile2(file2.filename) ? parseWorkflowPermissionsFromPatch(file2.filename, file2.patch) : void 0;
     if (file2.status !== "added") {
       const baseContent = await fetchFileContent(octokit, config2, file2.filename, config2.baseSha);
       if (baseContent) {
         baseSnapshots.push(parseConfigFile(file2.filename, baseContent));
+        analyzed = true;
+      } else if ((patchFallback?.baseEntries.length ?? 0) > 0) {
+        baseSnapshots.push({
+          filePath: file2.filename,
+          entries: patchFallback?.baseEntries ?? [],
+          tools: []
+        });
+        analyzed = true;
       }
     }
     if (file2.status !== "removed") {
       const headContent = await fetchFileContent(octokit, config2, file2.filename, config2.headSha);
       if (headContent) {
         headSnapshots.push(parseConfigFile(file2.filename, headContent));
+        analyzed = true;
+      } else if ((patchFallback?.headEntries.length ?? 0) > 0) {
+        headSnapshots.push({
+          filePath: file2.filename,
+          entries: patchFallback?.headEntries ?? [],
+          tools: []
+        });
+        analyzed = true;
       }
     }
+    if (!analyzed) {
+      unreadableFiles.push(file2.filename);
+    }
+  }
+  if (baseSnapshots.length === 0 && headSnapshots.length === 0 && unreadableFiles.length > 0) {
+    warning(
+      `Config files changed but could not be read at base/head refs: ${unreadableFiles.join(", ")}`
+    );
+    return createSkippedResult(["SKIP_PERMISSION_DENIED"]);
   }
   const allSnapshots = [...baseSnapshots, ...headSnapshots];
   const parseWarnings = allSnapshots.filter((s) => s.parseWarning);
@@ -67204,7 +67232,8 @@ async function getChangedFiles(octokit, config2) {
     });
     return (data.files ?? []).map((f) => ({
       filename: f.filename,
-      status: f.status ?? "modified"
+      status: f.status ?? "modified",
+      ...typeof f.patch === "string" ? { patch: f.patch } : {}
     }));
   } catch (error49) {
     const status = error49.status;
@@ -67235,6 +67264,87 @@ async function fetchFileContent(octokit, config2, path, ref) {
 function matchGlob(pattern, filename) {
   const regexStr = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
   return new RegExp(`^${regexStr}$`).test(filename);
+}
+function isWorkflowFile2(path) {
+  return path.startsWith(".github/workflows/") && (path.endsWith(".yml") || path.endsWith(".yaml"));
+}
+function parseWorkflowPermissionsFromPatch(filePath, patch) {
+  if (!patch) return { baseEntries: [], headEntries: [] };
+  const baseEntries = [];
+  const headEntries = [];
+  const lines = patch.split("\n");
+  let inPermissions = false;
+  let permissionsIndent = -1;
+  for (const rawLine of lines) {
+    if (rawLine.startsWith("@@")) {
+      inPermissions = false;
+      permissionsIndent = -1;
+      continue;
+    }
+    if (rawLine.length === 0) continue;
+    const marker = rawLine[0];
+    if (marker !== "+" && marker !== "-" && marker !== " ") continue;
+    const line = rawLine.slice(1);
+    const permMatch = /^(\s*)permissions:\s*$/.exec(line);
+    if (permMatch) {
+      inPermissions = true;
+      permissionsIndent = (permMatch[1] ?? "").length;
+      continue;
+    }
+    if (!inPermissions) continue;
+    if (line.trim().length === 0) continue;
+    const kvMatch = /^(\s*)([a-z-]+):\s*(read|write)\s*$/.exec(line);
+    if (!kvMatch) {
+      const indent2 = line.match(/^(\s*)/)?.[1]?.length ?? 0;
+      if (indent2 <= permissionsIndent) {
+        inPermissions = false;
+        permissionsIndent = -1;
+      }
+      continue;
+    }
+    const indent = (kvMatch[1] ?? "").length;
+    if (indent <= permissionsIndent) {
+      inPermissions = false;
+      permissionsIndent = -1;
+      continue;
+    }
+    const key = kvMatch[2] ?? "";
+    const level = kvMatch[3];
+    const entries = permissionEntriesFromLevel(filePath, key, level);
+    if (entries.length === 0) continue;
+    if (marker === "+") {
+      headEntries.push(...entries);
+    } else if (marker === "-") {
+      baseEntries.push(...entries);
+    } else {
+      baseEntries.push(...entries);
+      headEntries.push(...entries);
+    }
+  }
+  return { baseEntries, headEntries };
+}
+function permissionEntriesFromLevel(source, key, level) {
+  const readMapping = {
+    contents: ["read.repo"],
+    issues: ["read.issues"],
+    "pull-requests": ["read.pulls"],
+    packages: ["read.packages"]
+  };
+  const writeMapping = {
+    contents: ["write.repo"],
+    issues: ["write.issues"],
+    "pull-requests": ["write.pulls"],
+    packages: ["write.packages"],
+    actions: ["write.actions"]
+  };
+  const caps = level === "read" ? readMapping[key] ?? [] : [...readMapping[key] ?? [], ...writeMapping[key] ?? []];
+  return caps.map((capability) => ({
+    capability,
+    source,
+    sourceType: "explicit",
+    tool: "workflow-level",
+    raw: `permissions.${key}: ${level}`
+  }));
 }
 function generateFixSuggestions(policyResult, config2) {
   const suggestions = [];

@@ -1,5 +1,5 @@
 source_repo: eivindsjursen-lab/gates-suite
 source_branch: main
-source_commit: 5a2cdde340df
-synced_at_utc: 2026-03-15T19:19:46Z
+source_commit: 62e1a0cf016c
+synced_at_utc: 2026-03-16T07:29:31Z
 source_path: packages/agent-permission-diff-gate

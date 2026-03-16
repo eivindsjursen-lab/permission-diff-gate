@@ -67122,6 +67122,11 @@ async function execute(config2) {
   const relevantFiles = changedFilesResult.filter(
     (f) => config2.configPaths.some((pattern) => matchGlob(pattern, f.filename))
   );
+  for (const file2 of changedFilesResult) {
+    if (isWorkflowFile2(file2.filename) && hasPermissionsPatch(file2.patch) && !relevantFiles.some((existing) => existing.filename === file2.filename)) {
+      relevantFiles.push(file2);
+    }
+  }
   if (relevantFiles.length === 0) {
     return {
       result: "pass",
@@ -67322,6 +67327,10 @@ function parseWorkflowPermissionsFromPatch(filePath, patch) {
     }
   }
   return { baseEntries, headEntries };
+}
+function hasPermissionsPatch(patch) {
+  if (!patch) return false;
+  return patch.split("\n").some((line) => line.startsWith("+") && line.includes("permissions:"));
 }
 function permissionEntriesFromLevel(source, key, level) {
   const readMapping = {

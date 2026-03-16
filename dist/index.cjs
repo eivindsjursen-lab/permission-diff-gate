@@ -67043,6 +67043,8 @@ async function run() {
 }
 function readInputs() {
   const [owner = "", repo = ""] = (process.env["GITHUB_REPOSITORY"] ?? "").split("/");
+  const baseShaInput = getInput("base_sha");
+  const headShaInput = getInput("head_sha");
   const prNumberStr = process.env["GITHUB_EVENT_NAME"] === "pull_request" ? process.env["PR_NUMBER"] ?? getInput("pr_number") : void 0;
   const prNumber = prNumberStr ? parseInt(prNumberStr, 10) || void 0 : void 0;
   let configPaths;
@@ -67069,8 +67071,8 @@ function readInputs() {
     owner,
     repo,
     prNumber,
-    baseSha: process.env["GITHUB_BASE_SHA"] ?? process.env["GITHUB_EVENT_BEFORE"] ?? "",
-    headSha: process.env["GITHUB_SHA"] ?? ""
+    baseSha: baseShaInput || process.env["PERMISSION_DIFF_BASE_SHA"] || process.env["GITHUB_BASE_SHA"] || process.env["GITHUB_EVENT_BEFORE"] || "",
+    headSha: headShaInput || process.env["PERMISSION_DIFF_HEAD_SHA"] || process.env["GITHUB_SHA"] || ""
   };
 }
 function handleGracefulDegrade(error49) {

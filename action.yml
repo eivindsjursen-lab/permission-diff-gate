@@ -30,6 +30,12 @@ inputs:
     description: "Glob patterns for agent/MCP config files (JSON array)"
     required: false
     default: '[".github/mcp*.yml",".github/mcp*.yaml",".github/mcp*.json",".github/agent*.yml",".github/agent*.yaml"]'
+  base_sha:
+    description: "Optional base commit SHA override (useful for workflow_dispatch validation)"
+    required: false
+  head_sha:
+    description: "Optional head commit SHA override (useful for workflow_dispatch validation)"
+    required: false
 
 outputs:
   result:

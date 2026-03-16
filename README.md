@@ -35,7 +35,7 @@ permissions:
 
 steps:
   - name: Permission Diff Gate
-    uses: eivindsjursen-lab/permission-diff-gate@v0.1.0
+    uses: eivindsjursen-lab/permission-diff-gate@v0.1.1
     with:
       mode: warn
       policy_level: standard
@@ -85,3 +85,4 @@ Development source of truth lives in:
 
 - `eivindsjursen-lab/gates-suite`
 - `packages/agent-permission-diff-gate`
+

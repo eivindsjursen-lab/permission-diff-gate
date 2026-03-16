@@ -35,7 +35,7 @@ permissions:
 
 steps:
   - name: Permission Diff Gate
-    uses: eivindsjursen-lab/permission-diff-gate@v0.1.4
+    uses: eivindsjursen-lab/permission-diff-gate@v0.1.5
     with:
       mode: warn
       policy_level: standard
@@ -92,6 +92,10 @@ jobs:
           base_sha: ${{ inputs.base_sha }}
           head_sha: ${{ inputs.head_sha }}
 ```
+
+If commit comparison still cannot be resolved, the gate returns:
+
+- `SKIP_COMPARE_NOT_FOUND`
 
 ## Outputs
 

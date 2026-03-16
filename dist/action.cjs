@@ -65662,6 +65662,11 @@ var SKIP_PERMISSION_DENIED = defineCode(
   "skip",
   "Insufficient permissions to access required GitHub API endpoints. Check the token permissions in your workflow."
 );
+var SKIP_COMPARE_NOT_FOUND = defineCode(
+  "SKIP_COMPARE_NOT_FOUND",
+  "skip",
+  "Could not compare the provided base/head commits. Verify that both SHAs exist in the repository and were passed correctly."
+);
 var SKIP_GITHUB_ABUSE_LIMIT = defineCode(
   "SKIP_GITHUB_ABUSE_LIMIT",
   "skip",
@@ -65783,6 +65788,7 @@ var ALL_CODES = new Map(
     PASS_NO_SCOPE_CHANGE,
     SKIP_NO_BASELINE,
     SKIP_PERMISSION_DENIED,
+    SKIP_COMPARE_NOT_FOUND,
     SKIP_GITHUB_ABUSE_LIMIT,
     SKIP_WORKFLOW_MISMATCH,
     SKIP_UNSUPPORTED_FORMAT,
@@ -67093,6 +67099,9 @@ async function execute(config2) {
   if (changedFilesResult === "rate_limited") {
     return createSkippedResult(["SKIP_RATE_LIMITED"]);
   }
+  if (changedFilesResult === "compare_not_found") {
+    return createSkippedResult(["SKIP_COMPARE_NOT_FOUND"]);
+  }
   if (changedFilesResult === "error") {
     return createSkippedResult(["SKIP_PERMISSION_DENIED"]);
   }
@@ -67224,6 +67233,7 @@ async function getChangedFiles(octokit, config2) {
     );
     if (status === 429) return "rate_limited";
     if (status === 403) return "permission_denied";
+    if (status === 404) return "compare_not_found";
     return "error";
   }
 }

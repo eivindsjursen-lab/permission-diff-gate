@@ -8,7 +8,7 @@ import {
   parseAllowlist,
   parseConfigFile,
   run
-} from "./chunk-GFIMOT53.js";
+} from "./chunk-MHA3T5B6.js";
 import "./chunk-MQS5OOVT.js";
 export {
   ALL_CAPABILITIES,
